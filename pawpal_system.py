@@ -1,73 +1,73 @@
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
-
-
-@dataclass
-class Owner:
-    name: str
-    available_minutes: int
-    preferences: Dict[str, str] = field(default_factory=dict)
-
-    def update_preferences(self, new_preferences: Dict[str, str]) -> None:
-        pass
-
-
-@dataclass
-class Pet:
-    name: str
-    species: str
-    age: int
-    owner_name: str
-
-    def get_profile(self) -> str:
-        pass
+from typing import List, Optional
 
 
 @dataclass
 class Task:
-    title: str
-    category: str
-    duration: int
-    priority: int
-    required: bool = False
-    preferred_time: Optional[str] = None
+    """Represents a single pet care activity."""
+
+    description: str
+    time: str
+    frequency: str
     completed: bool = False
 
-    def mark_completed(self) -> None:
-        pass
-
-    def update_priority(self, new_priority: int) -> None:
-        pass
+    def mark_complete(self) -> None:
+        """Marks the task as completed."""
+        self.completed = True
 
 
 @dataclass
-class DailyPlan:
-    selected_tasks: List[Task] = field(default_factory=list)
-    total_minutes: int = 0
-    reasoning: List[str] = field(default_factory=list)
+class Pet:
+    """Stores pet details and its care tasks."""
+
+    name: str
+    species: str
+    age: int
+    tasks: List[Task] = field(default_factory=list)
 
     def add_task(self, task: Task) -> None:
-        pass
+        """Adds a new task to the pet."""
+        self.tasks.append(task)
+
+    def get_tasks(self) -> List[Task]:
+        """Returns all tasks for this pet."""
+        return self.tasks
 
 
-class SchedulePlanner:
-    def __init__(self) -> None:
-        self.tasks: List[Task] = []
+@dataclass
+class Owner:
+    """Manages multiple pets."""
 
-    def add_task(self, task: Task) -> None:
-        pass
+    name: str
+    pets: List[Pet] = field(default_factory=list)
 
-    def edit_task(self, task_index: int, updated_task: Task) -> None:
-        pass
+    def add_pet(self, pet: Pet) -> None:
+        """Adds a pet to the owner."""
+        self.pets.append(pet)
 
-    def remove_task(self, task_index: int) -> None:
-        pass
+    def get_all_tasks(self) -> List[Task]:
+        """Returns all tasks from all of the owner's pets."""
+        all_tasks = []
+        for pet in self.pets:
+            all_tasks.extend(pet.get_tasks())
+        return all_tasks
 
-    def rank_tasks(self) -> List[Task]:
-        pass
 
-    def generate_daily_plan(self, owner: Owner) -> DailyPlan:
-        pass
+class Scheduler:
+    """Organizes and manages tasks across all pets."""
 
-    def explain_plan(self, plan: DailyPlan) -> List[str]:
-        pass
+    def __init__(self, owner: Owner) -> None:
+        """Initializes the scheduler with an owner."""
+        self.owner = owner
+
+    def get_all_tasks(self) -> List[Task]:
+        """Retrieves all tasks from the owner's pets."""
+        return self.owner.get_all_tasks()
+
+    def get_sorted_tasks(self) -> List[Task]:
+        """Returns tasks sorted by time."""
+        return sorted(self.get_all_tasks(), key=lambda task: task.time)
+
+    def get_incomplete_tasks(self) -> List[Task]:
+        """Returns only tasks that are not completed."""
+        return [task for task in self.get_all_tasks() if not task.completed]
