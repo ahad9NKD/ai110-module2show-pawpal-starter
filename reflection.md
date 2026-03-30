@@ -58,13 +58,13 @@ This tradeoff is reasonable at the current scale for two reasons. First, pet car
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+AI tools were used in three distinct ways across the project phases. During design, I used chat prompts to brainstorm which scheduling behaviors were most important for a pet owner and to surface edge cases I might have missed (such as a pet with no tasks, or a one-time task that should not recur). During implementation, I used inline suggestions to draft the `sort_by_time` lambda, the `timedelta` arithmetic in `mark_task_complete`, and the `defaultdict` grouping in `detect_conflicts`. During testing, I used AI to generate an initial list of test scenarios, which I then reviewed and extended to make sure each test was actually asserting the right thing.
+
+The most useful prompts were specific and scoped: for example, "how should `detect_conflicts` handle a task that is already completed?" forced a concrete design decision (exclude completed tasks) rather than producing a generic answer.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+The AI initially suggested that `detect_conflicts` should flag conflicts between tasks belonging to the same pet only, on the reasoning that tasks for different pets could theoretically run in parallel. I rejected this because a single owner manages all pets simultaneously — if Rocky's vet appointment and Milo's grooming are both at 09:00, the owner is still double-booked. I verified the decision by writing `test_detect_conflicts_across_multiple_pets`, which confirms that cross-pet same-time conflicts are correctly flagged.
 
 ---
 
@@ -72,13 +72,13 @@ This tradeoff is reasonable at the current scale for two reasons. First, pet car
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+The test suite (26 tests) covers task completion state, pet-name stamping, chronological sort correctness (including insertion-order independence), case-insensitive pet filtering, pending/completed status filtering, daily and weekly recurrence (correct `due_date` arithmetic and correct pet assignment), one-time task completion (no follow-up created), conflict detection (same time flagged, different times clean, completed tasks excluded, multi-slot conflicts, cross-pet conflicts), and edge cases for owners or pets with no tasks.
+
+These tests matter because scheduling bugs are silent — the app does not crash, it just shows the wrong plan. Automated tests are the only reliable way to catch a mis-sorted schedule or a recurrence appearing on the wrong date.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+Confidence level: **4 out of 5 stars**. All documented behaviors pass and edge cases for empty data are covered. The remaining gap is duration-based overlap detection: two tasks scheduled 15 minutes apart with 30-minute durations would not be flagged. Testing that would require adding a `duration` field to `Task` and rewriting the conflict algorithm.
 
 ---
 
@@ -86,12 +86,12 @@ This tradeoff is reasonable at the current scale for two reasons. First, pet car
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+The separation between data classes (`Task`, `Pet`, `Owner`) and scheduling logic (`Scheduler`) made the system straightforward to test in isolation. Every method in `Scheduler` can be called with a freshly built owner object, so no shared state bleeds between tests. That clean boundary was the most valuable design decision in the project.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+The `Task` time field is a plain string. This works as long as every task uses zero-padded 24-hour format, but nothing enforces that. A future iteration should validate the format on creation (or switch to a `datetime.time` field), so a typo like `"9:00"` instead of `"09:00"` does not silently break sort order.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+AI tools are most valuable when the human architect has already defined the problem clearly. When I asked "how do I sort tasks by time?", the suggestions were immediately useful because the data model and the desired outcome were already specified. When I asked a vague question like "how should I handle conflicts?", I had to do more follow-up work to refine the answer into a concrete design decision. The lesson is that AI accelerates implementation but does not replace the upfront thinking needed to know exactly what you want to build.
