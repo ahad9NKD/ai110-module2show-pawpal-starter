@@ -22,6 +22,15 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Smarter Scheduling
+
+The `Scheduler` class now includes four algorithmic improvements beyond basic task listing:
+
+- **Sorting** — `sort_by_time()` orders all tasks chronologically using Python's `sorted()` with a lambda key on the `HH:MM` time string. Zero-padded 24-hour format means lexicographic order equals chronological order, so no datetime parsing is needed.
+- **Filtering** — `filter_by_pet(name)` returns only the tasks for a given pet; `filter_by_status(completed)` separates pending tasks from finished ones. Both use list comprehensions for a single-pass O(n) scan.
+- **Recurring tasks** — `mark_task_complete(task)` marks a task done and automatically creates the next occurrence using Python's `timedelta`: `+1 day` for `"daily"` tasks and `+7 days` for `"weekly"` tasks. One-time (`"once"`) tasks are simply closed out.
+- **Conflict detection** — `detect_conflicts()` groups all tasks by their time slot into a `defaultdict` and emits a warning string for every slot that contains more than one task. It catches exact double-bookings in O(n) time without crashing the program.
+
 ## Getting started
 
 ### Setup
