@@ -34,8 +34,11 @@ This design separates data objects from decision-making logic. That makes the sy
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Yes, the design changed in two significant ways.
+
+First, `SchedulePlanner` was renamed to `Scheduler` and its internal task list was removed. In the original design, `SchedulePlanner` maintained its own flat list of tasks. In the final implementation, `Scheduler` holds a reference to the `Owner` and calls `owner.get_all_tasks()` whenever it needs tasks. This eliminated duplicated state — tasks live in exactly one place (inside each `Pet`) and the scheduler never owns a copy.
+
+Second, the `DailyPlan` class was dropped entirely. The original design imagined a structured output object with selected tasks, total minutes used, and a reasoning list. During implementation it became clear that a plain sorted `list[Task]` was sufficient for the UI and for testing, and adding a wrapper class would have added complexity without adding value at this scale. The "reasoning" concept is represented more simply: the Streamlit UI explains the sort order and flags conflicts inline.
 
 ---
 

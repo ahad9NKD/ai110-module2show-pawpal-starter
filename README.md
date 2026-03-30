@@ -22,6 +22,75 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## 📸 Demo
+
+<a href="app_screenshot.png" target="_blank"><img src="app_screenshot.png" title="PawPal App" width="100%" alt="PawPal App" /></a>
+
+## System Architecture
+
+### Original design (Phase 1 UML)
+
+The initial design had five classes: `Owner`, `Pet`, `Task`, `SchedulePlanner`, and `DailyPlan`. `SchedulePlanner` held its own flat task list and produced a `DailyPlan` object. `Task` modeled priority, duration, category, and a required flag — reflecting a constraint-based ranking approach.
+
+### Final implementation (Phase 6 UML)
+
+```mermaid
+classDiagram
+    direction TB
+
+    class Task {
+        +description: str
+        +time: str
+        +frequency: str
+        +completed: bool
+        +due_date: date
+        +pet_name: str
+        +mark_complete()
+    }
+
+    class Pet {
+        +name: str
+        +species: str
+        +age: int
+        +tasks: list[Task]
+        +add_task(task: Task)
+        +get_tasks() list[Task]
+    }
+
+    class Owner {
+        +name: str
+        +pets: list[Pet]
+        +add_pet(pet: Pet)
+        +get_all_tasks() list[Task]
+    }
+
+    class Scheduler {
+        +owner: Owner
+        +get_all_tasks() list[Task]
+        +sort_by_time() list[Task]
+        +get_sorted_tasks() list[Task]
+        +filter_by_pet(pet_name) list[Task]
+        +filter_by_status(completed) list[Task]
+        +get_incomplete_tasks() list[Task]
+        +mark_task_complete(task) Task
+        +detect_conflicts() list[str]
+    }
+
+    Owner "1" --> "0..*" Pet : owns
+    Pet "1" --> "0..*" Task : has
+    Scheduler "1" --> "1" Owner : schedules for
+```
+
+### Key design changes from original to final
+
+| Aspect | Original design | Final implementation |
+|---|---|---|
+| Planner class | `SchedulePlanner` with its own task list | `Scheduler` delegates to `Owner.get_all_tasks()` — no duplicate state |
+| Output object | `DailyPlan` (selected tasks + reasoning) | Plain sorted `list[Task]` — simpler and sufficient |
+| Task fields | `priority`, `duration`, `category`, `required` | `time` (HH:MM), `frequency`, `due_date`, `pet_name` — time-first model |
+| Scheduling model | Constraint-based ranking within a time budget | Chronological sort + conflict detection |
+| Recurrence | Not modelled | `mark_task_complete()` auto-creates the next occurrence via `timedelta` |
+
 ## Smarter Scheduling
 
 The `Scheduler` class now includes four algorithmic improvements beyond basic task listing:
@@ -50,7 +119,7 @@ The suite (26 tests in `tests/test_pawpal.py`) covers:
 | Conflict detection | Same-time tasks are flagged; different-time tasks are clean; completed tasks are excluded from conflict checks; multiple conflict slots each produce a warning |
 | Edge cases | Owner with no pets and pet with no tasks both return empty results safely |
 
-**Confidence level: ★★★★☆**
+**Confidence level: ★★★★☆
 All happy paths and the most important edge cases are covered. The main gap is that conflict detection only checks exact time matches and does not model task duration, so a 30-minute overlap between adjacent tasks would go undetected.
 
 ## Getting started
